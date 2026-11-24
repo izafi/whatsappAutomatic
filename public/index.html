@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WhatsApp Hourly Message Bot</title>
+  <style>
+    :root {
+      --bg-base: #0b1120;
+      --bg-card: #131d31;
+      --bg-input: #090e1a;
+      --border-subtle: #24324a;
+      --border-focus: #3b82f6;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --warning: #d97706;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 24px;
+    }
+    .header-title h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-title p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 860px) {
+      .dashboard-grid {
+        grid-template-columns: 1.3fr 1fr;
+        align-items: start;
+      }
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+      margin-bottom: 20px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+    textarea {
+      min-height: 95px;
+      resize: vertical;
+    }
+    .help-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    /* Selected Contact Banner */
+    .selected-contact-badge {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      background: #0f233f;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #93c5fd;
+      margin-bottom: 16px;
+    }
+    .selected-contact-badge strong {
+      font-size: 15px;
+    }
+
+    /* Buttons */
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease;
+      white-space: nowrap;
+    }
+    button:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+    button:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    button.success {
+      background: var(--success);
+    }
+    button.success:hover:not(:disabled) {
+      background: var(--success-hover);
+    }
+    button.danger {
+      background: var(--danger);
+    }
+    button.danger:hover:not(:disabled) {
+      background: var(--danger-hover);
+    }
+    button.secondary {
+      background: #1e293b;
+      border: 1px solid var(--border-subtle);
+      color: #cbd5e1;
+    }
+    button.secondary:hover:not(:disabled) {
+      background: #334155;
+      color: #fff;
+    }
+    button.sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    /* Status Pills & Indicators */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pill.connected, .pill.active {
+      background: #14532d;
+      color: #86efac;
+      border: 1px solid #166534;
+    }
+    .pill.disconnected, .pill.stopped {
+      background: #450a0a;
+      color: #fca5a5;
+      border: 1px solid #7f1d1d;
+    }
+    .pill.pending, .pill.qr {
+      background: #713f12;
+      color: #fde047;
+      border: 1px solid #a16207;
+    }
+
+    /* Status Details List */
+    .status-list {
+      list-style: none;
+    }
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 13px;
+    }
+    .status-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .status-label {
+      color: var(--text-muted);
+    }
+    .status-value {
+      font-weight: 500;
+      color: var(--text-main);
+      text-align: right;
+    }
+
+    /* QR Code Display */
+    .qr-container {
+      text-align: center;
+      padding: 16px;
+      background: #090e1a;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+    .qr-container img {
+      max-width: 220px;
+      width: 100%;
+      height: auto;
+      background: #fff;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .qr-instruction {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      max-width: 380px;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      background: #1e293b;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    #toast.success { background: #064e3b; border-color: #047857; color: #a7f3d0; }
+    #toast.error { background: #7f1d1d; border-color: #b91c1c; color: #fecaca; }
+    #toast.info { background: #1e3a8a; border-color: #2563eb; color: #dbeafe; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="header-title">
+      <h1>💬 WhatsApp Auto Message Bot</h1>
+      <p>Automated periodic messaging directly to your specified WhatsApp number</p>
+    </div>
+    <div class="header-actions">
+      <button class="secondary sm" id="lockBtn" onclick="logoutDashboard()">🔒 Lock Dashboard</button>
+    </div>
+  </header>
+
+  <!-- Login Section -->
+  <section class="card" id="loginCard">
+    <div class="card-title">Dashboard Authentication</div>
+    <p class="help-text" style="margin-bottom: 14px;">Enter the <code>DASHBOARD_TOKEN</code> configured in your <code>.env</code> file to unlock controls.</p>
+    <div class="form-group">
+      <label for="tokenInput">Dashboard Secret Token</label>
+      <input id="tokenInput" type="password" placeholder="Enter token (at least 24 characters)" autocomplete="current-password">
+    </div>
+    <button class="success" style="margin-top: 12px;" onclick="authenticate()">Unlock Dashboard</button>
+  </section>
+
+  <!-- Main Dashboard App -->
+  <div id="mainDashboard" class="hidden">
+    <div class="dashboard-grid">
+
+      <!-- Left Column: Message Configuration & Scheduler Controls -->
+      <div class="dashboard-col">
+        <section class="card">
+          <div class="card-title">Message Configuration</div>
+
+          <!-- Active Recipient Banner -->
+          <div class="selected-contact-badge">
+            <span>Target Recipient:</span>
+            <strong id="activeRecipientText">None configured</strong>
+          </div>
+
+          <!-- Direct Phone Number Input -->
+          <div class="form-group">
+            <label for="phoneInput">Recipient WhatsApp Number (with Country Code)</label>
+            <input id="phoneInput" type="text" placeholder="e.g. 923414618574 or +92 341 4618574" oninput="onPhoneInputChanged()">
+            <div class="help-text">
+              Enter full phone number with country code (e.g. <code>92</code> for Pakistan, <code>1</code> for US/Canada, <code>44</code> for UK).
+              Spaces, dashes, and + are automatically handled.
+            </div>
+          </div>
+
+          <!-- Message Textarea -->
+          <div class="form-group">
+            <label for="messageText">Reminder Message</label>
+            <textarea id="messageText" placeholder="Enter message text...">Stay healthy stay hydrated 💧</textarea>
+            <div class="help-text">Max 2,000 characters. Supports emojis.</div>
+          </div>
+
+          <!-- Interval Input -->
+          <div class="form-group">
+            <label for="intervalInput">Repeat Interval (Minutes)</label>
+            <input id="intervalInput" type="number" min="1" max="10080" value="1">
+            <div class="help-text">Range: 1 to 10,080 minutes (e.g. 1 min for fast testing, 60 mins for hourly).</div>
+          </div>
+
+          <!-- Control Actions -->
+          <div class="btn-group">
+            <button class="success" onclick="saveConfiguration(true)">💾 Save Settings</button>
+            <button class="primary" onclick="startScheduler()">▶ Start Scheduler</button>
+            <button class="danger" onclick="stopScheduler()">⏹ Stop Scheduler</button>
+            <button class="secondary" id="sendNowBtn" onclick="sendTestMessage()">📨 Send Test</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Live Status & Device Connection -->
+      <div class="dashboard-col">
+        <!-- WhatsApp Device Connection Card -->
+        <section class="card">
+          <div class="card-title">
+            <span>WhatsApp Connection</span>
+            <span id="waConnectionPill" class="pill disconnected">Checking…</span>
+          </div>
+
+          <!-- QR Code Section -->
+          <div id="qrBox" class="qr-container hidden">
+            <img id="qrImage" alt="WhatsApp Web QR Code">
+            <div class="qr-instruction">
+              Scan with WhatsApp on your phone:<br>
+              <strong>Settings &gt; Linked Devices &gt; Link a Device</strong>
+            </div>
+          </div>
+
+          <!-- Device Ready Info -->
+          <div id="deviceReadyBox" class="status-list hidden" style="margin-top: 10px;">
+            <div class="status-item">
+              <span class="status-label">Device Status</span>
+              <span class="status-value" style="color:#86efac;">Ready for Automation</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px;">
+            <button class="danger sm hidden" id="unlinkBtn" onclick="unlinkWhatsApp()">Unlink WhatsApp</button>
+          </div>
+        </section>
+
+        <!-- Scheduler Status Card -->
+        <section class="card">
+          <div class="card-title">
+            <span>Bot Status</span>
+            <span id="schedulerPill" class="pill stopped">Inactive</span>
+          </div>
+
+          <ul class="status-list">
+            <li class="status-item">
+              <span class="status-label">Automation</span>
+              <span class="status-value" id="automationStatus">—</span>
+            </li>
+            <li class="status-item">
+              <span class="status-label">Next Message</span>
+              <span class="status-value" id="nextRunTime">—</span>
+            </li>
+            <li class="status-item">
+              <span class="status-label">Last Successful Message</span>
+              <span class="status-value" id="lastSentTime">Never</span>
+            </li>
+            <li class="status-item">
+              <span class="status-label">Last Error</span>
+              <span class="status-value" id="lastErrorText" style="color: var(--text-muted);">None</span>
+            </li>
+          </ul>
+
+          <div style="margin-top: 16px;">
+            <button class="secondary sm" onclick="refreshDashboard(true)">↻ Refresh Status</button>
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Floating Toast Notification -->
+<div id="toast"></div>
+
+<script>
+let token = sessionStorage.getItem("wa_bot_token") || "";
+let savedNumber = "";
+let refreshTimer = null;
+
+const $ = (id) => document.getElementById(id);
+
+function showToast(message, type = "info") {
+  const toast = $("toast");
+  toast.textContent = message;
+  toast.className = `show ${type}`;
+  setTimeout(() => {
+    toast.className = "";
+  }, 4000);
+}
+
+function getHeaders() {
+  return {
+    "content-type": "application/json",
+    "x-dashboard-token": token
+  };
+}
+
+async function request(endpoint, method = "GET", body) {
+  const response = await fetch(endpoint, {
+    method,
+    headers: getHeaders(),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed");
+  }
+  return data;
+}
+
+// Authentication
+async function authenticate() {
+  token = $("tokenInput").value.trim();
+  if (!token) {
+    showToast("Please enter your dashboard token.", "error");
+    return;
+  }
+  try {
+    await request("/api/status");
+    sessionStorage.setItem("wa_bot_token", token);
+    $("loginCard").classList.add("hidden");
+    $("mainDashboard").classList.remove("hidden");
+    showToast("Dashboard unlocked successfully.", "success");
+    await refreshDashboard(false);
+    startPolling();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+function logoutDashboard() {
+  sessionStorage.removeItem("wa_bot_token");
+  token = "";
+  $("tokenInput").value = "";
+  $("mainDashboard").classList.add("hidden");
+  $("loginCard").classList.remove("hidden");
+  if (refreshTimer) clearInterval(refreshTimer);
+  showToast("Dashboard locked.", "info");
+}
+
+function sanitizeNumber(input) {
+  if (!input) return "";
+  return String(input).replace(/[^0-9]/g, "");
+}
+
+function updateRecipientDisplay() {
+  const inputDigits = sanitizeNumber($("phoneInput").value.trim());
+
+  if (savedNumber && inputDigits === savedNumber) {
+    $("activeRecipientText").innerHTML = `<span style="color:#86efac;">+${savedNumber}</span> <span style="font-size:11px; color:#86efac; border:1px solid #166534; padding:2px 7px; border-radius:99px; margin-left:6px; font-weight:600;">Saved & Ready ✔</span>`;
+  } else if (inputDigits) {
+    $("activeRecipientText").innerHTML = `<span style="color:#fde047;">+${inputDigits}</span> <span style="font-size:11px; color:#fde047; border:1px solid #a16207; padding:2px 7px; border-radius:99px; margin-left:6px; font-weight:600;">Click 'Save Settings' to apply</span>`;
+  } else if (savedNumber) {
+    $("activeRecipientText").innerHTML = `<span style="color:#86efac;">+${savedNumber}</span> <span style="font-size:11px; color:#86efac; border:1px solid #166534; padding:2px 7px; border-radius:99px; margin-left:6px; font-weight:600;">Saved & Ready ✔</span>`;
+  } else {
+    $("activeRecipientText").textContent = "None configured";
+  }
+}
+
+function onPhoneInputChanged() {
+  updateRecipientDisplay();
+}
+
+// Dashboard Refresh
+async function refreshDashboard(showSuccessToast = false) {
+  try {
+    const status = await request("/api/status");
+
+    // WhatsApp Connection Card
+    const isConn = Boolean(status.connected);
+    const pill = $("waConnectionPill");
+    pill.textContent = isConn ? "Connected" : (status.state || "Not Connected");
+    pill.className = `pill ${isConn ? "connected" : (status.qrAvailable ? "qr" : "disconnected")}`;
+
+    if (isConn) {
+      $("unlinkBtn").classList.remove("hidden");
+      $("deviceReadyBox").classList.remove("hidden");
+      $("qrBox").classList.add("hidden");
+    } else {
+      $("unlinkBtn").classList.add("hidden");
+      $("deviceReadyBox").classList.add("hidden");
+
+      if (status.qrAvailable) {
+        const qrData = await request("/api/qr");
+        $("qrImage").src = qrData.qr;
+        $("qrBox").classList.remove("hidden");
+      } else {
+        $("qrBox").classList.add("hidden");
+      }
+    }
+
+    // Scheduler Status Card
+    const isSchedActive = Boolean(status.schedulerActive);
+    const schedPill = $("schedulerPill");
+    schedPill.textContent = isSchedActive ? "Active" : "Inactive";
+    schedPill.className = `pill ${isSchedActive ? "active" : "stopped"}`;
+
+    $("automationStatus").textContent = status.config.enabled ? "Enabled" : "Stopped";
+    $("nextRunTime").textContent = (isSchedActive && status.nextRunAt)
+      ? new Date(status.nextRunAt).toLocaleString()
+      : "—";
+    $("lastSentTime").textContent = status.lastSentAt
+      ? new Date(status.lastSentAt).toLocaleString()
+      : "Never";
+
+    const errText = $("lastErrorText");
+    if (status.lastError) {
+      errText.textContent = status.lastError;
+      errText.style.color = "#f87171";
+    } else {
+      errText.textContent = "None";
+      errText.style.color = "var(--text-muted)";
+    }
+
+    // Sync saved recipient number from backend
+    savedNumber = status.config.phoneNumber || (status.config.recipientId ? status.config.recipientId.replace(/[^0-9]/g, "") : "");
+
+    // Populate phone input if empty or user not typing
+    if (document.activeElement !== $("phoneInput")) {
+      if (savedNumber && !$("phoneInput").value) {
+        $("phoneInput").value = savedNumber;
+      }
+    }
+
+    updateRecipientDisplay();
+
+    if (document.activeElement !== $("messageText")) {
+      $("messageText").value = status.config.message || "";
+    }
+    if (document.activeElement !== $("intervalInput")) {
+      $("intervalInput").value = status.config.intervalMinutes || 1;
+    }
+
+    if (showSuccessToast) {
+      showToast("Dashboard status updated.", "info");
+    }
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+// Settings & Actions
+async function saveConfiguration(showToastFeedback = true) {
+  const rawNumber = $("phoneInput").value.trim();
+  const digits = sanitizeNumber(rawNumber);
+
+  if (!digits || digits.length < 7 || digits.length > 15) {
+    showToast("Please enter a valid international phone number (7 to 15 digits).", "error");
+    return false;
+  }
+
+  const message = $("messageText").value.trim();
+  if (!message) {
+    showToast("Message cannot be empty.", "error");
+    return false;
+  }
+
+  const intervalMinutes = Math.max(1, Number($("intervalInput").value) || 1);
+
+  try {
+    const res = await request("/api/config", "PUT", {
+      phoneNumber: digits,
+      recipientId: `${digits}@c.us`,
+      recipientName: `+${digits}`,
+      message,
+      intervalMinutes
+    });
+
+    savedNumber = res.config.phoneNumber || digits;
+    updateRecipientDisplay();
+
+    if (showToastFeedback) {
+      showToast(`Settings saved for +${savedNumber}! Ready to send.`, "success");
+    }
+    return true;
+  } catch (err) {
+    showToast(err.message, "error");
+    return false;
+  }
+}
+
+async function startScheduler() {
+  // Auto-save any typed number first
+  const ok = await saveConfiguration(false);
+  if (!ok) return;
+
+  try {
+    const res = await request("/api/start", "POST");
+    showToast(res.message, "success");
+    await refreshDashboard(false);
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function stopScheduler() {
+  try {
+    const res = await request("/api/stop", "POST");
+    showToast(res.message, "info");
+    await refreshDashboard(false);
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function sendTestMessage() {
+  // Auto-save any typed number first
+  const ok = await saveConfiguration(false);
+  if (!ok) return;
+
+  const btn = $("sendNowBtn");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+
+  try {
+    const target = savedNumber;
+    const res = await request("/api/send-now", "POST", {
+      phoneNumber: target,
+      recipientId: `${target}@c.us`
+    });
+    showToast(`Test message sent to +${target}!`, "success");
+    await refreshDashboard(false);
+  } catch (err) {
+    showToast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "📨 Send Test";
+  }
+}
+
+async function unlinkWhatsApp() {
+  if (!confirm("Are you sure you want to unlink WhatsApp? This will log out the active session.")) {
+    return;
+  }
+  try {
+    const res = await request("/api/logout", "POST");
+    showToast(res.message, "info");
+    await refreshDashboard(false);
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+function startPolling() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => {
+    if (!token || $("mainDashboard").classList.contains("hidden")) return;
+    refreshDashboard(false);
+  }, 12000);
+}
+
+// Auto-login if token stored
+if (token) {
+  $("tokenInput").value = token;
+  authenticate();
+}
+</script>
+</body>
+</html>

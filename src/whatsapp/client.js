@@ -128,7 +128,8 @@ class WhatsAppConnectionManager {
           "--disable-dev-shm-usage",
           "--disable-accelerated-2d-canvas",
           "--no-first-run",
-          "--no-zygote"
+          "--no-zygote",
+          "--disable-gpu"
         ]
       };
 
@@ -136,30 +137,20 @@ class WhatsAppConnectionManager {
         puppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
       }
 
-      const webCacheType = process.env.WEB_VERSION_CACHE_TYPE || "remote";
-      const webVersionCacheConfig = webCacheType === "remote"
-        ? {
-            type: "remote",
-            remotePath: process.env.WEB_VERSION_REMOTE_PATH || "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html",
-            strict: false
-          }
-        : {
-            type: webCacheType
-          };
-
       const clientOptions = {
         authStrategy: new LocalAuth({
           dataPath: authDataPath
         }),
         authTimeoutMs: Number(process.env.AUTH_TIMEOUT_MS) || 120000,
         qrTimeoutMs: Number(process.env.QR_TIMEOUT_MS) || 60000,
-        webVersionCache: webVersionCacheConfig,
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        webVersionCache: {
+          type: "remote",
+          remotePath: process.env.WEB_VERSION_REMOTE_PATH || "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1015901307-alpha.html",
+          strict: false
+        },
         puppeteer: puppeteerOptions
       };
-
-      if (process.env.WEB_VERSION) {
-        clientOptions.webVersion = process.env.WEB_VERSION;
-      }
 
       this._client = new Client(clientOptions);
 

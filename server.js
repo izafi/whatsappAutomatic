@@ -42,10 +42,10 @@ app.use(errorHandler);
 
 // Bind server and start background services
 if (require.main === module) {
-  const server = app.listen(PORT, HOST, () => {
-    const displayHost = (HOST === "0.0.0.0" || HOST === "::") ? "localhost" : HOST;
+  // Listen on PORT without explicit HOST to bind directly to all interfaces (0.0.0.0 / ::) without getaddrinfo DNS lookup
+  const server = app.listen(PORT, () => {
     logger.info(TAG, `==========================================================`);
-    logger.info(TAG, ` WhatsApp Bot Server active on http://${displayHost}:${PORT}`);
+    logger.info(TAG, ` WhatsApp Bot Server active on port ${PORT}`);
     logger.info(TAG, ` Dashboard URL: http://localhost:${PORT}`);
     logger.info(TAG, `==========================================================`);
 

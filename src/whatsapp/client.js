@@ -137,6 +137,16 @@ class WhatsAppConnectionManager {
         puppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
       }
 
+      const webVersionCacheConfig = process.env.WEB_VERSION_CACHE_TYPE === "remote"
+        ? {
+            type: "remote",
+            remotePath: process.env.WEB_VERSION_REMOTE_PATH || "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
+            strict: false
+          }
+        : {
+            type: "none"
+          };
+
       const clientOptions = {
         authStrategy: new LocalAuth({
           dataPath: authDataPath
@@ -144,11 +154,7 @@ class WhatsAppConnectionManager {
         authTimeoutMs: Number(process.env.AUTH_TIMEOUT_MS) || 120000,
         qrTimeoutMs: Number(process.env.QR_TIMEOUT_MS) || 60000,
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-        webVersionCache: {
-          type: "remote",
-          remotePath: process.env.WEB_VERSION_REMOTE_PATH || "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1015901307-alpha.html",
-          strict: false
-        },
+        webVersionCache: webVersionCacheConfig,
         puppeteer: puppeteerOptions
       };
 
@@ -244,6 +250,33 @@ class WhatsAppConnectionManager {
     this._state.rawQr = null;
     this._isInitializing = false;
     logger.info(TAG, "WhatsApp client destroyed.");
+  }
+
+  /**
+   * Request an 8-character pairing code for a phone number
+   */
+  async requestPairingCode(phoneNumber) {
+    if (!this._client) {
+      logger.info(TAG, "Client not active, initializing before requesting code...");
+      await this.initialize();
+    }
+    const cleanNumber = String(phoneNumber).replace(/[^0-9]/g, "");
+    if (!cleanNumber || cleanNumber.length < 8) {
+      throw new Error("Please enter a valid phone number with country code (e.g. 923414618574).");
+    }
+    logger.info(TAG, `Requesting pairing code for phone: +${cleanNumber}`);
+    const code = await this._client.requestPairingCode(cleanNumber);
+    logger.info(TAG, `Received pairing code: ${code}`);
+    return code;
+  }
+
+  /**
+   * Manually trigger re-initialization (e.g. from dashboard retry button)
+   */
+  async reconnect() {
+    logger.info(TAG, "Reconnecting client session...");
+    await this.destroy();
+    return this.initialize();
   }
 }
 

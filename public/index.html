@@ -420,6 +420,25 @@
             </div>
           </div>
 
+          <!-- Alternative Phone Pairing Code Section -->
+          <div id="pairingCodeBox" style="margin-top: 14px; padding: 12px; background: #0c1527; border: 1px solid #1e3a5f; border-radius: 8px;">
+            <div style="font-size: 13px; font-weight: 600; color: #93c5fd; margin-bottom: 6px;">📱 Link with Phone Number (No camera required)</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4;">
+              Don't want to scan QR? Enter your WhatsApp phone number to get an 8-character pairing code:
+            </p>
+            <div style="display: flex; gap: 8px;">
+              <input id="pairPhoneInput" type="text" placeholder="e.g. 923414618574" style="flex: 1; padding: 7px 10px; font-size: 13px;">
+              <button class="primary sm" id="getPairCodeBtn" onclick="requestPairingCode()">Get Code</button>
+            </div>
+            <div id="pairCodeDisplay" class="hidden" style="margin-top: 10px; padding: 12px; background: #172554; border: 1px solid #3b82f6; border-radius: 6px; text-align: center;">
+              <div style="font-size: 11px; color: #93c5fd; margin-bottom: 4px; font-weight: 600;">ENTER THIS PAIRING CODE IN WHATSAPP:</div>
+              <div id="pairCodeValue" style="font-size: 26px; font-weight: 800; letter-spacing: 4px; color: #67e8f9; font-family: monospace;">—</div>
+              <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4;">
+                Open WhatsApp on phone &gt; <strong>Settings</strong> &gt; <strong>Linked Devices</strong> &gt; <strong>Link a Device</strong> &gt; <strong>Link with phone number instead</strong> &gt; enter the code above.
+              </div>
+            </div>
+          </div>
+
           <!-- Device Ready Info -->
           <div id="deviceReadyBox" class="status-list hidden" style="margin-top: 10px;">
             <div class="status-item">
@@ -428,7 +447,8 @@
             </div>
           </div>
 
-          <div style="margin-top: 14px;">
+          <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="secondary sm" id="retryConnectBtn" onclick="reconnectWhatsApp()">🔄 Retry / Reconnect WhatsApp</button>
             <button class="danger sm hidden" id="unlinkBtn" onclick="unlinkWhatsApp()">Unlink WhatsApp</button>
           </div>
         </section>
@@ -739,6 +759,49 @@ async function unlinkWhatsApp() {
     await refreshDashboard(false);
   } catch (err) {
     showToast(err.message, "error");
+  }
+}
+
+async function reconnectWhatsApp() {
+  const btn = $("retryConnectBtn");
+  btn.disabled = true;
+  btn.textContent = "Connecting…";
+  try {
+    const res = await request("/api/reconnect", "POST");
+    showToast(res.message, "info");
+    await refreshDashboard(false);
+  } catch (err) {
+    showToast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🔄 Retry / Reconnect WhatsApp";
+  }
+}
+
+async function requestPairingCode() {
+  const numInput = $("pairPhoneInput");
+  const phone = sanitizeNumber(numInput.value || $("phoneInput").value);
+  if (!phone || phone.length < 8) {
+    showToast("Please enter your WhatsApp phone number with country code (e.g. 923414618574).", "error");
+    return;
+  }
+  const btn = $("getPairCodeBtn");
+  btn.disabled = true;
+  btn.textContent = "Requesting…";
+  try {
+    const res = await request("/api/pairing-code", "POST", { phoneNumber: phone });
+    if (res.code) {
+      $("pairCodeDisplay").classList.remove("hidden");
+      $("pairCodeValue").textContent = res.code;
+      showToast("Pairing code received! Enter it on your phone.", "success");
+    } else {
+      showToast("Could not generate code yet. Ensure WhatsApp client is ready.", "error");
+    }
+  } catch (err) {
+    showToast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Get Code";
   }
 }
 

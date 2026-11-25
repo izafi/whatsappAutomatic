@@ -27,7 +27,14 @@ app.use(express.json({ limit: "20kb" }));
 // Restrict static files strictly to the public directory (protects .env, data/, and .wwebjs_auth/)
 app.use(express.static(path.join(__dirname, "public"), {
   dotfiles: "ignore",
-  index: "index.html"
+  index: "index.html",
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".html")) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+    }
+  }
 }));
 
 // Mount all modular application routes

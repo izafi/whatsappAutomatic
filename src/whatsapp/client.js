@@ -137,24 +137,19 @@ class WhatsAppConnectionManager {
         puppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
       }
 
-      const webVersionCacheConfig = process.env.WEB_VERSION_CACHE_TYPE === "remote"
-        ? {
-            type: "remote",
-            remotePath: process.env.WEB_VERSION_REMOTE_PATH || "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
-            strict: false
-          }
-        : {
-            type: "none"
-          };
-
       const clientOptions = {
         authStrategy: new LocalAuth({
           dataPath: authDataPath
         }),
-        authTimeoutMs: Number(process.env.AUTH_TIMEOUT_MS) || 120000,
+        webVersion: process.env.WEB_VERSION || "2.2412.54",
+        webVersionCache: {
+          type: "remote",
+          remotePath: process.env.WEB_VERSION_REMOTE_PATH || "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html",
+          strict: false
+        },
+        authTimeoutMs: Number(process.env.AUTH_TIMEOUT_MS) || 60000,
         qrTimeoutMs: Number(process.env.QR_TIMEOUT_MS) || 60000,
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-        webVersionCache: webVersionCacheConfig,
+        userAgent: process.env.USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
         puppeteer: puppeteerOptions
       };
 

@@ -11,7 +11,6 @@ const logger = require("./src/utils/logger");
 const TAG = "Server";
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST || "0.0.0.0";
 const TOKEN = process.env.DASHBOARD_TOKEN;
 
 if (!TOKEN || TOKEN.length < 24) {

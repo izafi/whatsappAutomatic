@@ -40,15 +40,29 @@ app.use("/api/*", notFoundHandler);
 // Centralized error handling middleware
 app.use(errorHandler);
 
-// Bind strictly to 127.0.0.1 (local loopback) for secure reverse-proxy deployment
+// Bind server and start background services
 if (require.main === module) {
   const server = app.listen(PORT, HOST, () => {
-    logger.info(TAG, `WhatsApp Bot Server active on http://${HOST}:${PORT}`);
+    const displayHost = (HOST === "0.0.0.0" || HOST === "::") ? "localhost" : HOST;
+    logger.info(TAG, `==========================================================`);
+    logger.info(TAG, ` WhatsApp Bot Server active on http://${displayHost}:${PORT}`);
+    logger.info(TAG, ` Dashboard URL: http://localhost:${PORT}`);
+    logger.info(TAG, `==========================================================`);
 
     // Initiate WhatsApp client in background
     whatsappManager.initialize().catch((err) => {
       logger.error(TAG, "WhatsApp background initialization error:", err.message);
     });
+  });
+
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      logger.error(TAG, `FATAL: Port ${PORT} is already in use by another process.`);
+      logger.error(TAG, `To kill previous instances in PowerShell, run: Stop-Process -Name "node" -Force`);
+    } else {
+      logger.error(TAG, "Server error:", err.message);
+    }
+    process.exit(1);
   });
 
   // Clean graceful shutdown handling

@@ -1,3 +1,4 @@
+const fs = require("fs");
 const path = require("path");
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const { ConnectionState } = require("./constants");
@@ -105,8 +106,19 @@ class WhatsAppConnectionManager {
       // Ensure persistence directory points to .wwebjs_auth (or custom volume on Railway)
       const authDataPath = process.env.WWEBJS_AUTH_PATH || path.resolve(__dirname, "../../.wwebjs_auth");
 
-      // Headless flag: defaults to false if not specified, true if HEADLESS=true
-      const isHeadless = process.env.HEADLESS === "true";
+      // Auto-clean any stale DevToolsActivePort from previous interrupted runs to prevent Puppeteer hanging
+      try {
+        const stalePortFile = path.join(authDataPath, "session", "DevToolsActivePort");
+        if (fs.existsSync(stalePortFile)) {
+          fs.unlinkSync(stalePortFile);
+          logger.info(TAG, "Cleaned up stale DevToolsActivePort lock file.");
+        }
+      } catch (cleanErr) {
+        logger.warn(TAG, "Note on stale port cleanup:", cleanErr.message);
+      }
+
+      // Headless flag: defaults to true unless explicitly disabled with HEADLESS=false
+      const isHeadless = process.env.HEADLESS !== "false";
 
       const puppeteerOptions = {
         headless: isHeadless,
@@ -124,16 +136,32 @@ class WhatsAppConnectionManager {
         puppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
       }
 
-      this._client = new Client({
+      const webCacheType = process.env.WEB_VERSION_CACHE_TYPE || "remote";
+      const webVersionCacheConfig = webCacheType === "remote"
+        ? {
+            type: "remote",
+            remotePath: process.env.WEB_VERSION_REMOTE_PATH || "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html",
+            strict: false
+          }
+        : {
+            type: webCacheType
+          };
+
+      const clientOptions = {
         authStrategy: new LocalAuth({
           dataPath: authDataPath
         }),
-        authTimeoutMs: 120000,
-        webVersionCache: {
-          type: "none"
-        },
+        authTimeoutMs: Number(process.env.AUTH_TIMEOUT_MS) || 120000,
+        qrTimeoutMs: Number(process.env.QR_TIMEOUT_MS) || 60000,
+        webVersionCache: webVersionCacheConfig,
         puppeteer: puppeteerOptions
-      });
+      };
+
+      if (process.env.WEB_VERSION) {
+        clientOptions.webVersion = process.env.WEB_VERSION;
+      }
+
+      this._client = new Client(clientOptions);
 
       // Register all lifecycle events
       registerClientEvents(
